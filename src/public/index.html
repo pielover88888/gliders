@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="bundle.js"></script>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+    <div class="right_column">
+        <div id="login_container">
+            <label for="login_name">Name: </label><input id="login_name" type="text" />
+            <button id="login_submit">Submit</button>
+        </div>
+
+        <div id="connect_container">
+            <ul id="games_list"></ul>
+
+            <div class="create_game_options">
+                <select id="create_game_type">
+                    <option value="shield">Shield</option>
+                    <option value="custom">Custom</option>
+                    <option value="spawn">Spawn from king</option>
+                </select>
+                <input id="create_game_radius" type="number" min="3" max="10" value="5" />
+                <input id="create_game_kings" type="number" min="1" value="1" />
+                <input id="create_game_pieces" type="number" min="1" value="14" />
+            </div>
+            <button id="create_game_button">Create game</button>
+        </div>
+
+        <div id="controls_container">
+            <ol>
+                <li>Move a piece to an adjacent space</li>
+                <li>Launch one or more gliders</li>
+            </ol>
+            <button id="control_end_turn">Finish Turn</button>
+        </div>
+    </div>
+
+    <div id="board_container" class="left_column">
+        <svg id="board" viewBox="-400 -400 800 800"></svg>
+    </div>
+</body>
+</html>

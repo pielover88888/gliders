@@ -1,0 +1,33 @@
+{
+  "name": "gliders",
+  "version": "1.0.0",
+  "description": "Multiplayer strategy board game",
+  "main": "server.js",
+  "dependencies": {
+    "express": "^4.13.3",
+    "ip": "^1.1.0",
+    "primus": "^4.0.2",
+    "ws": "^0.8.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JWalker1995/gliders.git"
+  },
+  "keywords": [
+    "multiplayer",
+    "strategy",
+    "board",
+    "game",
+    "js"
+  ],
+  "author": "Joel Walker",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/JWalker1995/gliders/issues"
+  },
+  "homepage": "https://github.com/JWalker1995/gliders#readme"
+}
