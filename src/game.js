@@ -7,11 +7,13 @@ var Game = function(opts, player_id)
     var board;
     var pieces = [];
 
+    var board_rad;
     var board_diam;
     var neighbor_offsets;
 
-    this.CELL_EMPTY = false;
-    this.CELL_EDGE = undefined;
+    this.CELL_EMPTY = 1;
+    this.CELL_EDGE = 2;
+    this.CELL_WALL = 3;
 
     this.ACTION_MOVE = 1;
     this.ACTION_SHOOT = 2;
@@ -23,15 +25,69 @@ var Game = function(opts, player_id)
     var can_shoot = true;
     var turn_actions = [];
 
-    var init = function()
-    {
-        board = new Array(board_diam * board_diam).fill(_this.CELL_EDGE);
-        var board_center = opts.board_rad * opts.board_rad * 2 + opts.board_rad * 6 + 4;
+    this.add_cell_callback = function() {};
+    this.add_piece_callback = function() {};
+    this.code_warning_callback = function() {};
+    this.do_action_callback = function() {};
+    this.remove_piece_callback = function() {};
+    this.eliminate_player_callback = function() {};
+    this.end_turn_callback = function() {};
 
-        for (var i = 0; i < opts.board_rad; i++)
+    this.update_board = function(code)
+    {
+        var type_map = {
+            'n': _this.CELL_EMPTY,
+            'v': _this.CELL_EDGE,
+            'w': _this.CELL_WALL,
+        };
+        var meta_callback = function(radius, sectors)
         {
-            var cols = opts.board_rad * 2 - 1 - i;
-            for (var j = 1 - opts.board_rad; j < opts.board_rad - i; j++)
+            board_rad = radius;
+            board_diam = radius * 2 + 1;
+            board = new Array(board_diam * board_diam).fill(_this.CELL_EDGE);
+
+            neighbor_offsets = [-board_diam + 1, 1, board_diam, board_diam - 1, -1, -board_diam];
+            neighbor_offsets = neighbor_offsets.concat(neighbor_offsets);
+        };
+        var add_cell = function(x, y, type)
+        {
+            type = type_map[type];
+            if (typeof type === 'undefined') {type = _this.CELL_EMPTY;}
+
+            var loc = _this.get_loc(x, y);
+            board[loc] = type;
+            _this.add_cell_callback(loc, type);
+        };
+        HexGrid.str_to_grid(code, meta_callback, add_cell, _this.code_warning_callback);
+    };
+
+    this.update_formation = function(code)
+    {
+        var type_map = {
+            'e': _this.CELL_EMPTY,
+            'n': _this.CELL_EDGE,
+            'k': _this.CELL_WALL,
+        };
+
+        var add_piece = function(x, y, type, sector)
+        {
+            if (type === 'n' || type === 'k')
+            {
+                var loc = _this.get_loc(x, y);
+                var piece = make_piece(sector, loc, type === 'k');
+                _this.add_piece_callback(piece);
+            }
+        };
+        HexGrid.str_to_grid(code, function() {}, add_piece, _this.code_warning_callback);
+
+        /*
+        board = new Array(board_diam * board_diam).fill(_this.CELL_EDGE);
+        var board_center = board_rad * board_rad * 2 + board_rad * 6 + 4;
+
+        for (var i = 0; i < board_rad; i++)
+        {
+            var cols = board_rad * 2 - 1 - i;
+            for (var j = 1 - board_rad; j < board_rad - i; j++)
             {
                 board[_this.get_loc(i, j)] = _this.CELL_EMPTY;
                 board[_this.get_loc(-i, j + i)] = _this.CELL_EMPTY;
@@ -57,33 +113,7 @@ var Game = function(opts, player_id)
 
         setup_standard_team(0, false);
         setup_standard_team(1, true);
-    };
-
-    this.create_from_code = function(code_str, add_callback, warning_callback)
-    {
-        var type_map = {
-            'n': _this.CELL_EMPTY,
-            'v': _this.CELL_EDGE,
-            'w': _this.CELL_WALL,
-        };
-
-        var meta_callback = function(radius, sectors)
-        {
-            board_diam = radius * 2 + 1;
-            board = new Array(board_diam * board_diam).fill(_this.CELL_EDGE);
-
-            neighbor_offsets = [-board_diam + 1, 1, board_diam, board_diam - 1, -1, -board_diam];
-            neighbor_offsets = neighbor_offsets.concat(neighbor_offsets);
-        };
-        var add_cell = function(x, y, type)
-        {
-            type = type_map[type];
-            if (typeof type === 'undefined') {type = _this.CELL_EMPTY;}
-
-            board[_this.get_loc(x, y)] = type;
-            add_callback(x, y, type);
-        };
-        construct_hex_grid(code_str, add_cell, warning_callback);
+        */
     };
 
     this.add_player = function(player)
@@ -299,13 +329,13 @@ var Game = function(opts, player_id)
 
     var make_piece = function(player_id, loc, is_king)
     {
-        if (board[piece.loc] === _this.CELL_EDGE)
+        if (board[loc] === _this.CELL_EDGE)
         {
             console.error('Make piece location is an edge cell');
             return;
         }
 
-        if (board[piece.loc] !== _this.CELL_EMPTY)
+        if (board[loc] !== _this.CELL_EMPTY)
         {
             console.error('Make piece location is already occupied');
             return;
@@ -360,21 +390,19 @@ var Game = function(opts, player_id)
 
     this.get_row = function(loc)
     {
-        return Math.floor(loc / board_diam) - opts.board_rad;
+        return Math.floor(loc / board_diam) - board_rad;
     };
     this.get_col = function(loc)
     {
-        return (loc % board_diam) - opts.board_rad;
+        return (loc % board_diam) - board_rad;
     };
     this.get_loc = function(row, col)
     {
-        return (row + opts.board_rad) * board_diam + col + opts.board_rad;
+        return (row + board_rad) * board_diam + col + board_rad;
     };
 
     this.get_options = function() {return opts;};
     this.get_player_id = function() {return player_id;};
     this.get_board = function() {return board;};
     this.get_pieces = function() {return pieces;};
-
-    init();
 };

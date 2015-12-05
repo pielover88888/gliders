@@ -4,8 +4,6 @@ var GameController = function(game, primus)
 
     var player_id = game.get_player_id();
 
-    var primus;
-
     var init = function()
     {
         primus.on('data', handle_data);

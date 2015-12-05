@@ -11,6 +11,7 @@ var Player = require('./player.js');
 var ServerApp = function()
 {
     var app;
+    var primus;
     var script;
 
     var init = function()
@@ -49,7 +50,7 @@ var ServerApp = function()
             console.log('Server listening at ' + host + ':' + port);
         });
 
-        var primus = new Primus(server, {
+        primus = new Primus(server, {
             'transformer': 'websockets',
         });
         compile_script(primus);
@@ -75,6 +76,7 @@ var ServerApp = function()
             fs.readFileSync('gamecontroller.js'),
             fs.readFileSync('gamerenderer.js'),
             fs.readFileSync('hexgrid.js'),
+            fs.readFileSync('hexgridview.js'),
             fs.readFileSync('util.js'),
         ].join('\n\n');
 
@@ -85,6 +87,9 @@ var ServerApp = function()
 
     var send_script = function(req, res)
     {
+        // This re-compiles the script for every request to aid debugging
+        compile_script(primus);
+
         if (script)
         {
             res.send(script);

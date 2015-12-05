@@ -30,24 +30,63 @@ var HexGrid = {
             switch (sectors)
             {
             case 1:
-                // TODO: implement this case
-                debugger;
+                switch (s)
+                {
+                    case 0:
+                        add_callback(x, y-x, type, 0);
+                        add_callback(y, -x, type, 1);
+                        add_callback(y-x, -y, type, 2);
+                        add_callback(-x, x-y, type, 3);
+                        add_callback(-y, x, type, 4);
+                        add_callback(x-y, y, type, 5);
+                        break;
+                }
                 break;
 
             case 2:
-                // TODO: rotate by s
-                add_callback(x, y, type);
-                add_callback(y, y - x, type);
-                add_callback(-x - y, x, type);
+                switch (s)
+                {
+                    case 0:
+                        add_callback(x, y-x, type, 0);
+                        add_callback(y-x, -y, type, 1);
+                        add_callback(-y, x, type, 2);
+                        break;
+                    case 1:
+                        add_callback(y, -x, type, 0);
+                        add_callback(-x, x-y, type, 1);
+                        add_callback(x-y, y, type, 2);
+                        break;
+                }
                 break;
 
             case 3:
-                add_callback(x, y, type);
-                add_callback(-x, -y, type);
+                switch (s)
+                {
+                    case 0:
+                        add_callback(x, y-x, type, 0);
+                        add_callback(-x, x-y, type, 1);
+                        break;
+                    case 1:
+                        add_callback(y, -x, type, 0);
+                        add_callback(-y, x, type, 1);
+                        break;
+                    case 2:
+                        add_callback(y-x, -y, type, 0);
+                        add_callback(x-y, y, type, 1);
+                        break;
+                }
                 break;
 
             case 6:
-                add_callback(x, y, type);
+                switch (s)
+                {
+                    case 0: add_callback(x, y-x, type, 0); break;
+                    case 1: add_callback(y, -x, type, 0); break;
+                    case 2: add_callback(y-x, -y, type, 0); break;
+                    case 3: add_callback(-x, x-y, type, 0); break;
+                    case 4: add_callback(-y, x, type, 0); break;
+                    case 5: add_callback(x-y, y, type, 0); break;
+                }
                 break;
             }
 

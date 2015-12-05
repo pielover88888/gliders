@@ -1,5 +1,4 @@
 var game_opts = {
-    'board_rad': 5,
     'cell_rad': 45,
     'cell_spacing': 50,
     'piece_rad': 30,
@@ -81,4 +80,11 @@ window.onload = function()
             renderer = new GameRenderer(controller, els);
         }
     });
+
+    // Debug stuff:
+    game = new Game(game_opts, 0);
+    controller = new GameController(game, primus);
+    renderer = new GameRenderer(controller, els);
+    game.update_board('5');
+    game.update_formation('5,3,e,e,e,e,e,e,n,e,e,e,n,e,e,n,n,n,e,e,n,e,k,e,e,e,n,e,n,n,e,n,n,e,e');
 };

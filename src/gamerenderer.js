@@ -5,11 +5,17 @@ var GameRenderer = function(controller, els)
     var game = controller.get_game();
     var opts = game.get_options();
 
+    var grid = new HexGridView(els.board, game);
+
     var shown_actions = [];
     var clicked_piece;
 
-    var sqrt_3 = Math.sqrt(3.0);
+    var init = function()
+    {
+    };
 
+    /*
+    var sqrt_3 = Math.sqrt(3.0);
     var get_cell_cx = function(row, col)
     {
         return col * opts.cell_spacing * sqrt_3 + row * opts.cell_spacing * sqrt_3 / 2.0;
@@ -18,6 +24,7 @@ var GameRenderer = function(controller, els)
     {
         return row * opts.cell_spacing * 3.0/2.0;
     };
+    */
 
     var init_els = function()
     {
@@ -27,6 +34,7 @@ var GameRenderer = function(controller, els)
 
     var init_board = function()
     {
+        /*
         var board = game.get_board();
         for (var i = 0; i < board.length; i++)
         {
@@ -35,6 +43,7 @@ var GameRenderer = function(controller, els)
                 make_cell(i);
             }
         }
+        */
         /*
         for (var i = 0; i < opts.board_rad; i++)
         {
@@ -51,10 +60,11 @@ var GameRenderer = function(controller, els)
         */
     };
 
+/*
     var make_cell = function(loc)
     {
         var el = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-        set_position(el, loc);
+        grid.set_transform(el, loc);
         el.setAttribute('points', get_hex_pts().join(' '));
         el.style.fill = 'silver';
         el.style.stroke = 'grey';
@@ -67,7 +77,7 @@ var GameRenderer = function(controller, els)
 
         var text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         text.appendChild(document.createTextNode(loc));
-        set_position(text, loc);
+        grid.set_transform(text, loc);
         els.board.appendChild(text);
     };
 
@@ -83,6 +93,7 @@ var GameRenderer = function(controller, els)
         }
         return pts;
     };
+*/
 
     var init_pieces = function()
     {
@@ -93,10 +104,15 @@ var GameRenderer = function(controller, els)
         }
     };
 
-    var make_piece = function(piece)
+    game.code_warning_callback = function(msg)
+    {
+        console.warn(msg);
+    };
+
+    game.add_piece_callback = function(piece)
     {
         var el = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        set_position(el, piece.loc);
+        grid.set_transform(el, piece.loc);
         el.setAttribute('r', opts.piece_rad);
         el.style.fill = piece.is_king ? opts.piece_king_colors[piece.player] : opts.piece_colors[piece.player];
         el.style.stroke = 'silver';
@@ -140,7 +156,7 @@ var GameRenderer = function(controller, els)
         for (var i = 0; i < actions.length; i++)
         {
             var el = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-            set_position(el, game.get_action_location(piece, actions[i]));
+            grid.set_transform(el, game.get_action_location(piece, actions[i]));
             el.setAttribute('r', opts.action_rad);
             el.style.fill = opts.piece_actions_colors[piece.player];
             el.style.stroke = 'silver';
@@ -163,20 +179,11 @@ var GameRenderer = function(controller, els)
         shown_actions = [];
     };
 
-    var set_position = function(el, loc)
-    {
-        var row = game.get_row(loc);
-        var col = game.get_col(loc);
-        var x = Math.floor(get_cell_cx(row, col));
-        var y = Math.floor(get_cell_cy(row, col));
-        el.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
-    };
-
     Util.add_callback(game, 'do_action_callback', function(piece, action)
     {
         update_end_turn_button();
 
-        set_position(piece.el, piece.loc);
+        grid.set_transform(piece.el, piece.loc);
 
         clicked_piece = undefined;
         hide_piece_actions();
