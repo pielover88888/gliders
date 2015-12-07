@@ -7,15 +7,13 @@ var HexGridView = function(container, game)
     var hex_pool = [];
     var hex_pool_next = 0;
 
-    var hide_cells = function()
+    Util.add_callback(game, 'reset_cells_callback', function()
     {
         hex_pool_next = 0;
-    };
+    });
 
-    game.add_cell_callback = function(loc, type)
+    Util.add_callback(game, 'add_cell_callback', function(loc, type)
     {
-        if (type === game.CELL_EDGE) {return;}
-        
         if (hex_pool_next >= hex_pool.length)
         {
             hex_pool.push(make_cell());
@@ -24,15 +22,15 @@ var HexGridView = function(container, game)
         _this.set_transform(hex_pool[hex_pool_next], loc);
         set_type(hex_pool[hex_pool_next], type);
         hex_pool_next++;
-    };
+    });
 
-    var finalize_cells = function()
+    Util.add_callback(game, 'finalize_cells_callback', function()
     {
         for (var i = hex_pool_next; i < hex_pool.length; i++)
         {
             hex_pool[i].style.display = 'none';
         }
-    };
+    });
 
     var make_cell = function()
     {

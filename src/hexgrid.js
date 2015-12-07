@@ -26,6 +26,7 @@ var HexGrid = {
         while (true)
         {
             var type = code[i];
+            if (typeof type === 'string') {type = type.trim();}
 
             switch (sectors)
             {

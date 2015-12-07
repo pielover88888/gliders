@@ -39,6 +39,11 @@ window.onload = function()
 
         // Connect container
         'games_list': document.getElementById('games_list'),
+        'create_game_options': document.getElementById('create_game_options'),
+        'create_game_preset': document.getElementById('create_game_preset'),
+        'create_game_board': document.getElementById('create_game_board'),
+        'create_game_formation': document.getElementById('create_game_formation'),
+        'create_game_options': document.getElementById('create_game_options'),
         'create_game_button': document.getElementById('create_game_button'),
 
         // Controls container
@@ -58,9 +63,29 @@ window.onload = function()
         });
     };
 
+    els.create_game_preset.onchange = function()
+    {
+        if (!this.value) {return;}
+        var parts = this.value.split('/');
+        els.create_game_board.value = parts[0] || '';
+        els.create_game_formation.value = parts[1] || '';
+        els.create_game_options.value = parts[2] || '';
+    };
+
+    els.create_game_board.onkeyup = els.create_game_formation.onkeyup = function()
+    {
+        game.update_board(els.create_game_board.value);
+        game.update_formation(els.create_game_formation.value);
+    };
+
     els.create_game_button.onclick = function()
     {
-
+        primus.write({
+            'q': 'create_game',
+            'board': els.create_game_board.value,
+            'formation': els.create_game_formation.value,
+            'options': els.create_game_options.value,
+        });
     };
 
     primus.on('data', function(data)
@@ -82,9 +107,9 @@ window.onload = function()
     });
 
     // Debug stuff:
-    game = new Game(game_opts, 0);
+    game = new Game(game_opts, undefined);
     controller = new GameController(game, primus);
     renderer = new GameRenderer(controller, els);
     game.update_board('5');
-    game.update_formation('5,3,e,e,e,e,e,e,n,e,e,e,n,e,e,n,n,n,e,e,n,e,k,e,e,e,n,e,n,n,e,n,n,e,e');
+    game.update_formation('3,3,e,e,e,e,e,e,e,k');
 };

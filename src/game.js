@@ -25,7 +25,10 @@ var Game = function(opts, player_id)
     var can_shoot = true;
     var turn_actions = [];
 
+    this.reset_cells_callback = function() {};
     this.add_cell_callback = function() {};
+    this.finalize_cells_callback = function() {};
+
     this.add_piece_callback = function() {};
     this.code_warning_callback = function() {};
     this.do_action_callback = function() {};
@@ -51,24 +54,27 @@ var Game = function(opts, player_id)
         };
         var add_cell = function(x, y, type)
         {
-            type = type_map[type];
-            if (typeof type === 'undefined') {type = _this.CELL_EMPTY;}
+            if (type === 'n') {type = _this.CELL_EMPTY;}
+            else if (type === 'w') {type = _this.CELL_WALL;}
+            else if (type !== 'v' && type)
+            {
+                _this.code_warning_callback('Invalid type code "' + type + '"');
+                return;
+            }
+            else {type = _this.CELL_EMPTY;}
 
             var loc = _this.get_loc(x, y);
             board[loc] = type;
             _this.add_cell_callback(loc, type);
         };
+
+        _this.reset_cells_callback();
         HexGrid.str_to_grid(code, meta_callback, add_cell, _this.code_warning_callback);
+        _this.finalize_cells_callback();
     };
 
     this.update_formation = function(code)
     {
-        var type_map = {
-            'e': _this.CELL_EMPTY,
-            'n': _this.CELL_EDGE,
-            'k': _this.CELL_WALL,
-        };
-
         var add_piece = function(x, y, type, sector)
         {
             if (type === 'n' || type === 'k')
@@ -77,43 +83,12 @@ var Game = function(opts, player_id)
                 var piece = make_piece(sector, loc, type === 'k');
                 _this.add_piece_callback(piece);
             }
+            else if (type !== 'e' && type)
+            {
+                _this.code_warning_callback('Invalid type code "' + type_code + '"');
+            }
         };
         HexGrid.str_to_grid(code, function() {}, add_piece, _this.code_warning_callback);
-
-        /*
-        board = new Array(board_diam * board_diam).fill(_this.CELL_EDGE);
-        var board_center = board_rad * board_rad * 2 + board_rad * 6 + 4;
-
-        for (var i = 0; i < board_rad; i++)
-        {
-            var cols = board_rad * 2 - 1 - i;
-            for (var j = 1 - board_rad; j < board_rad - i; j++)
-            {
-                board[_this.get_loc(i, j)] = _this.CELL_EMPTY;
-                board[_this.get_loc(-i, j + i)] = _this.CELL_EMPTY;
-            }
-        }
-
-        var setup_standard_team = function(player_id, flip)
-        {
-            var mul = flip ? -1 : 1;
-            make_piece(player_id, _this.get_loc(-2 * mul, 3 * mul), false);
-            make_piece(player_id, _this.get_loc(-2 * mul, 2 * mul), false);
-            make_piece(player_id, _this.get_loc(-2 * mul, 1 * mul), false);
-            make_piece(player_id, _this.get_loc(-2 * mul, 0 * mul), false);
-            make_piece(player_id, _this.get_loc(-2 * mul, -1 * mul), false);
-            make_piece(player_id, _this.get_loc(-3 * mul, 4 * mul), false);
-            make_piece(player_id, _this.get_loc(-3 * mul, 3 * mul), false);
-            make_piece(player_id, _this.get_loc(-3 * mul, 0 * mul), false);
-            make_piece(player_id, _this.get_loc(-3 * mul, -1 * mul), false);
-            make_piece(player_id, _this.get_loc(-4 * mul, 4 * mul), false);
-            make_piece(player_id, _this.get_loc(-4 * mul, 2 * mul), true);
-            make_piece(player_id, _this.get_loc(-4 * mul, 0 * mul), false);
-        };
-
-        setup_standard_team(0, false);
-        setup_standard_team(1, true);
-        */
     };
 
     this.add_player = function(player)
@@ -183,7 +158,8 @@ var Game = function(opts, player_id)
             if (is_spawn_valid(piece, front_loc))
             {
                 actions.push({
-                    'type': _this.ACTION_SPAWN
+                    'type': _this.ACTION_SPAWN,
+                    'dir': j
                 });
             }
         }
@@ -342,7 +318,7 @@ var Game = function(opts, player_id)
         }
 
         var piece = {
-            'player': player_id,
+            'player_id': player_id,
             'is_king': is_king,
             'loc': loc,
             'id': pieces.length,

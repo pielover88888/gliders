@@ -104,17 +104,17 @@ var GameRenderer = function(controller, els)
         }
     };
 
-    game.code_warning_callback = function(msg)
+    Util.add_callback(game, 'code_warning_callback', function(msg)
     {
         console.warn(msg);
-    };
+    });
 
-    game.add_piece_callback = function(piece)
+    Util.add_callback(game, 'add_piece_callback', function(piece)
     {
         var el = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
         grid.set_transform(el, piece.loc);
         el.setAttribute('r', opts.piece_rad);
-        el.style.fill = piece.is_king ? opts.piece_king_colors[piece.player] : opts.piece_colors[piece.player];
+        el.style.fill = piece.is_king ? opts.piece_king_colors[piece.player_id] : opts.piece_colors[piece.player_id];
         el.style.stroke = 'silver';
         el.style.strokeWidth = opts.stroke_width;
 
@@ -147,7 +147,7 @@ var GameRenderer = function(controller, els)
 
         piece.el = el;
         els.board.appendChild(el);
-    };
+    });
 
     var show_piece_actions = function(piece)
     {
@@ -158,7 +158,7 @@ var GameRenderer = function(controller, els)
             var el = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
             grid.set_transform(el, game.get_action_location(piece, actions[i]));
             el.setAttribute('r', opts.action_rad);
-            el.style.fill = opts.piece_actions_colors[piece.player];
+            el.style.fill = opts.piece_actions_colors[piece.player_id];
             el.style.stroke = 'silver';
             el.style.strokeWidth = opts.stroke_width;
 
