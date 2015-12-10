@@ -19,6 +19,7 @@ var Game = function(opts, player_id)
     this.ACTION_SHOOT = 2;
     this.ACTION_SPAWN = 3;
 
+    var num_players;
     var turn = 0;
     var players_dead = new Array(opts.num_players);
     var player_spawns = new Array(opts.num_players).fill(opts.num_spawns);
@@ -51,6 +52,8 @@ var Game = function(opts, player_id)
 
             neighbor_offsets = [-board_diam + 1, 1, board_diam, board_diam - 1, -1, -board_diam];
             neighbor_offsets = neighbor_offsets.concat(neighbor_offsets);
+
+            num_players = 6 / sectors;
         };
         var add_cell = function(x, y, type)
         {

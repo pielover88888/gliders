@@ -1,9 +1,9 @@
 var HexGrid = {
-    'str_to_grid': function(code_str, meta_callback, add_callback, warning_callback)
+    'str_to_grid': function(code, meta_callback, add_callback, warning_callback)
     {
-        var code = code_str.split(',');
-        var radius = parseInt(code[0]) || 5;
-        var sectors = parseInt(code[1]) || 1;
+        code = code.replace(/\W/g, '').toLowerCase();
+        var radius = parseInt(code[0] || 5, 36);
+        var sectors = parseInt(code[1] || 1, 36);
 
         if (radius < 2)
         {
@@ -26,7 +26,6 @@ var HexGrid = {
         while (true)
         {
             var type = code[i];
-            if (typeof type === 'string') {type = type.trim();}
 
             switch (sectors)
             {

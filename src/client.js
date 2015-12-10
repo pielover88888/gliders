@@ -19,7 +19,7 @@ var game_opts = {
 
 var els;
 
-var primus = Primus.connect();
+var remote;
 
 var game;
 var controller;
@@ -27,24 +27,20 @@ var renderer;
 
 window.onload = function()
 {
+    remote = new Remote(undefined, Primus.connect());
+
     els = {
-        'login_container': document.getElementById('login_container'),
+        'welcome_container': document.getElementById('welcome_container'),
         'connect_container': document.getElementById('connect_container'),
         'controls_container': document.getElementById('controls_container'),
         'board_container': document.getElementById('board_container'),
 
-        // Login container
-        'login_name': document.getElementById('login_name'),
-        'login_submit': document.getElementById('login_submit'),
+        // Weocome container
+        'welcome_name': document.getElementById('welcome_name'),
 
         // Connect container
         'games_list': document.getElementById('games_list'),
-        'create_game_options': document.getElementById('create_game_options'),
-        'create_game_preset': document.getElementById('create_game_preset'),
-        'create_game_board': document.getElementById('create_game_board'),
-        'create_game_formation': document.getElementById('create_game_formation'),
-        'create_game_options': document.getElementById('create_game_options'),
-        'create_game_button': document.getElementById('create_game_button'),
+        'create_game': document.getElementById('create_game'),
 
         // Controls container
         'end_turn': document.getElementById('control_end_turn'),
@@ -53,16 +49,18 @@ window.onload = function()
         'board': document.getElementById('board'),
     };
 
-    els.login_submit.onclick = function()
+    els.welcome_name.onblur = function()
     {
-        this.setAttribute('disabled', 'disabled');
-
-        primus.write({
-            'q': 'login',
-            'name': els.login_name.value
+        remote.write({
+            'q': 'set_name',
+            'name': this.innerText,
         });
     };
 
+    var renderer = new CreateGameRenderer(remote, undefined);
+    els.create_game.appendChild(renderer.get_el());
+
+    /*
     els.create_game_preset.onchange = function()
     {
         if (!this.value) {return;}
@@ -80,35 +78,42 @@ window.onload = function()
 
     els.create_game_button.onclick = function()
     {
-        primus.write({
+        remote.write({
             'q': 'create_game',
-            'board': els.create_game_board.value,
-            'formation': els.create_game_formation.value,
-            'options': els.create_game_options.value,
+            'game': {
+                'board': els.create_game_board.value,
+                'formation': els.create_game_formation.value,
+                'options': els.create_game_options.value,
+            },
         });
     };
+    */
 
-    primus.on('data', function(data)
+    remote.register_handler('logged_in', function(data)
     {
-        if (data.q === 'logged_in')
-        {
-            els.login_container.style.display = 'none';
-        }
-        else if (data.q === 'start_game')
-        {
-            if (renderer) {renderer.destruct();}
-            if (controller) {controller.destruct();}
-            if (game) {game.destruct();}
+        els.login_container.style.display = 'none';
+    });
 
-            game = new Game(game_opts, 0);
-            controller = new GameController(game);
-            renderer = new GameRenderer(controller, els);
-        }
+    remote.register_handler('start_game', function(data)
+    {
+        if (renderer) {renderer.destruct();}
+        if (controller) {controller.destruct();}
+        if (game) {game.destruct();}
+
+        game = new Game(game_opts, 0);
+        controller = new GameController(game);
+        renderer = new GameRenderer(controller, els);
+    });
+
+    remote.register_handler('open_games_push', function(data)
+    {
+        var renderer = new CreateGameRenderer(remote, data.game);
+        els.games_list.appendChild(renderer.get_el());
     });
 
     // Debug stuff:
     game = new Game(game_opts, undefined);
-    controller = new GameController(game, primus);
+    controller = new GameController(game, remote);
     renderer = new GameRenderer(controller, els);
     game.update_board('5');
     game.update_formation('3,3,e,e,e,e,e,e,e,k');

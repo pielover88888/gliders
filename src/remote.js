@@ -1,21 +1,31 @@
-var Remote = module.exports = function(spark)
+var Remote = module.exports = function(app, spark)
 {
     var _this = this;
 
-    var knows = [];
     var handlers = {};
 
     var send = [];
     var send_timeout;
 
+    var name = 'guest';
+    var name_locked = false;
+    var in_games = [];
+
     spark.on('data', function(data)
     {
-        if (typeof data === 'object')
+        if (typeof data === 'object' && typeof data.length === 'number')
         {
-            var handler = handlers[data.q];
-            if (typeof handler === 'function')
+            for (var i = 0; i < data.length; i++)
             {
-                handler(data);
+                var obj = data[i];
+                if (typeof obj === 'object')
+                {
+                    var handler = handlers[obj.q];
+                    if (typeof handler === 'function')
+                    {
+                        handler(obj);
+                    }
+                }
             }
         }
     });
@@ -39,12 +49,46 @@ var Remote = module.exports = function(spark)
         }
     };
 
-    handlers.set = function(data)
+    this.subscribe = function(public_id)
     {
-        var obj = PublicObject.get_obj(data.id);
-        if (typeof obj !== 'undefined' && typeof obj.recv_prop === 'function')
-        {
-            obj.recv_prop(data.key, data.val);
-        }
+        _this.write({
+            'q': 'subs',
+            'id': public_id,
+        });
     };
+
+    if (app)
+    {
+        this.register_handler('set_name', function(data)
+        {
+            if (!name_locked && typeof data.name === 'string')
+            {
+                name = data.name;
+            }
+        });
+
+        this.register_handler('create_game', function(data)
+        {
+            if (!name) {return;}
+
+            data.game.player_names = [];
+            app.create_game(data.game);
+            // TODO: join game
+        });
+
+        var join_game = function(data)
+        {
+            if (!name) {return;}
+            name_locked = true;
+
+            app.join_game(data.game_id, _this);
+        };
+
+        spark.on('close', function()
+        {
+            app.unsubscribe_open_games(_this);
+        });
+
+        app.subscribe_open_games(_this);
+    }
 };

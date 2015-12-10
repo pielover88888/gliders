@@ -1,4 +1,4 @@
-var GameController = function(game, primus)
+var GameController = function(game, remote)
 {
     var _this = this;
 
@@ -6,42 +6,35 @@ var GameController = function(game, primus)
 
     var init = function()
     {
-        primus.on('data', handle_data);
     };
 
-    var handle_data = function(data)
+    var check = function(flag)
     {
-        if (typeof data !== 'object') {return;}
-
-        if (data.q === 'turn')
+        if (!flag)
         {
-            if (!check(typeof data.player_id === 'number')) {return;}
-            if (!check(typeof data.actions === 'object')) {return;}
-
-            if (data.player_id !== player_id) {return;}
-
-            for (var i = 0; i < data.actions.length; i++)
-            {
-                var piece = check(_this.get_piece(action.piece_id));
-                if (!piece) {return;}
-                check(game.do_action(piece, data.actions[i]));
-            }
-            check(game.end_turn());
+            console.error('Received invalid data: ' + JSON.stringify(data));
         }
-
-        var check = function(flag)
-        {
-            if (!flag)
-            {
-                console.error('Received invalid data: ' + JSON.stringify(data));
-            }
-            return flag;
-        };
+        return flag;
     };
+    remote.register_handler('turn', function(data)
+    {
+        if (!check(typeof data.player_id === 'number')) {return;}
+        if (!check(typeof data.actions === 'object')) {return;}
 
+        if (data.player_id !== player_id) {return;}
+
+        for (var i = 0; i < data.actions.length; i++)
+        {
+            var piece = check(_this.get_piece(action.piece_id));
+            if (!piece) {return;}
+            check(game.do_action(piece, data.actions[i]));
+        }
+        check(game.end_turn());
+    });
+    
     Util.add_callback(game, 'end_turn_callback', function(actions)
     {
-        primus.write({
+        remote.write({
             'q': 'turn',
             'player_id': player_id,
             'actions': actions
