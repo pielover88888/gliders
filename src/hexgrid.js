@@ -1,4 +1,4 @@
-var HexGrid = {
+module.exports = {
     'str_to_grid': function(code, meta_callback, add_callback, warning_callback)
     {
         code = code.replace(/\W/g, '').toLowerCase();

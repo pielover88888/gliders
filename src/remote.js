@@ -1,4 +1,4 @@
-var Remote = module.exports = function(app, spark)
+module.exports = function(app, spark)
 {
     var _this = this;
 
@@ -10,6 +10,8 @@ var Remote = module.exports = function(app, spark)
     var name = 'guest';
     var name_locked = false;
     var in_games = [];
+
+    this.get_name = function() {return name;};
 
     spark.on('data', function(data)
     {
@@ -72,8 +74,9 @@ var Remote = module.exports = function(app, spark)
             if (!name) {return;}
 
             data.game.player_names = [];
-            app.create_game(data.game);
-            // TODO: join game
+            var game = app.create_game(data.game);
+
+            join_game({'game_id': game.get_game_id()});
         });
 
         var join_game = function(data)

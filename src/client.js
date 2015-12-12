@@ -1,21 +1,14 @@
-var game_opts = {
-    'cell_rad': 45,
-    'cell_spacing': 50,
-    'piece_rad': 30,
-    'action_rad': 20,
-    'stroke_width': 1,
-    'piece_colors': ['#FFFFFF', '#888888'],
-    'piece_king_colors': ['#FF0000', '#0000FF'],
-    'piece_actions_colors': ['#FFCCCC', '#CCCCFF'],
-    'num_players': 2,
-    'num_spawns': 3,
-};
-
 // 3 actions:
 // 1. Move piece - click on piece, then neighboring cells highlight. Click on highlighted cell to move
 // 2. Shoot one or more gliders in sequence - click on glider center piece, then possible destinations highlight. Click on highlighted cell to shoot. Can shoot another afterwards.
 // 3. Swap pieces
 // In all cases, before clicking "end turn", you can undo your actions
+
+var Remote = require('./remote.js');
+var Game = require('./game.js');
+var GameController = require('./gamecontroller.js');
+var GameRenderer = require('./gamerenderer.js');
+var CreateGameRenderer = require('./creategamerenderer.js');
 
 var els;
 
@@ -49,6 +42,17 @@ window.onload = function()
         'board': document.getElementById('board'),
     };
 
+    game = new Game(undefined);
+    controller = new GameController(game, remote);
+    renderer = new GameRenderer(controller, els);
+
+    game.update_board('5');
+    game.update_formation('5 3 e e e e e e n e e e n e e n n n e e n e k e e e n e n n e n n e e');
+    game.update_options('spawns=2');
+
+    var renderer = new CreateGameRenderer(remote, game, true);
+    els.create_game.appendChild(renderer.get_el());
+
     els.welcome_name.onblur = function()
     {
         remote.write({
@@ -56,9 +60,6 @@ window.onload = function()
             'name': this.innerText,
         });
     };
-
-    var renderer = new CreateGameRenderer(remote, undefined);
-    els.create_game.appendChild(renderer.get_el());
 
     /*
     els.create_game_preset.onchange = function()
@@ -100,21 +101,16 @@ window.onload = function()
         if (controller) {controller.destruct();}
         if (game) {game.destruct();}
 
-        game = new Game(game_opts, 0);
+        game = new Game(0);
         controller = new GameController(game);
         renderer = new GameRenderer(controller, els);
     });
 
     remote.register_handler('open_games_push', function(data)
     {
-        var renderer = new CreateGameRenderer(remote, data.game);
+        var game = new Game();
+        game.deserialize(data.game);
+        var renderer = new CreateGameRenderer(remote, game, false);
         els.games_list.appendChild(renderer.get_el());
     });
-
-    // Debug stuff:
-    game = new Game(game_opts, undefined);
-    controller = new GameController(game, remote);
-    renderer = new GameRenderer(controller, els);
-    game.update_board('5');
-    game.update_formation('3,3,e,e,e,e,e,e,e,k');
 };

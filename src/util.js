@@ -1,4 +1,13 @@
-var Util = {
+var Util = module.exports = {
+    'fill_array': function(size, val)
+    {
+        var res = [];
+        for (var i = 0; i < size; i++)
+        {
+            res[i] = val;
+        }
+        return res;
+    },
     'add_callback': function(obj, key, new_callback)
     {
         if (typeof obj[key] === 'function')

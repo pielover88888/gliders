@@ -1,16 +1,7 @@
-var CreateGameRenderer = function(remote, game)
-{
-    var editable = !game;
-    if (editable)
-    {
-        game = {
-            'board': '5',
-            'formation': '5 3 e e e e e e n e e e n e e n n n e e n e k e e e n e n n e n n e e',
-            'options': 'spawns=2',
-            'player_names': [],
-        };
-    }
+var Util = require('./util.js');
 
+module.exports = function(remote, game, editable)
+{
     // Formations:
     // 5/5 3 e e e e e e n e e e n e e n n n e e n e k e e e n e n n e n n e e
     // 5/3 3 e e e e e e e k/spawns=10
@@ -18,9 +9,10 @@ var CreateGameRenderer = function(remote, game)
     var html = '';
     html += '<div class="open_game_summary">'
         html += '<span class="open_game_players_list">';
-            for (var i = 0; i < game.player_names.length; i++)
+            var players = game.get_player_names();
+            for (var i = 0; i < players.length; i++)
             {
-                html += '<span class="open_game_player">' + Util.escape_text(game.player_names[i]) + '</span>';
+                html += '<span class="open_game_player">' + Util.escape_text(players[i]) + '</span>';
             }
             /*
             html += '<span class="open_game_players_have"></span>';
@@ -32,13 +24,13 @@ var CreateGameRenderer = function(remote, game)
     html += '</div>';
     html += '<div class="open_game_details">';
         html += '<span class="text_input_label">Board code: </span>';
-        html += '<span class="open_game_board text_input"' + (editable ? ' contenteditable="true"' : '') + '>' + Util.escape_text(game.board) + '</span>';
+        html += '<span class="open_game_board text_input"' + (editable ? ' contenteditable="true"' : '') + '>' + Util.escape_text(game.get_board_code()) + '</span>';
         html += '<br />';
         html += '<span class="text_input_label">Formation code: </span>';
-        html += '<span class="open_game_formation text_input"' + (editable ? ' contenteditable="true"' : '') + '>' + Util.escape_text(game.formation) + '</span>';
+        html += '<span class="open_game_formation text_input"' + (editable ? ' contenteditable="true"' : '') + '>' + Util.escape_text(game.get_formation_code()) + '</span>';
         html += '<br />';
         html += '<span class="text_input_label">Options code: </span>';
-        html += '<span class="open_game_options text_input"' + (editable ? ' contenteditable="true"' : '') + '>' + Util.escape_text(game.options) + '</span>';
+        html += '<span class="open_game_options text_input"' + (editable ? ' contenteditable="true"' : '') + '>' + Util.escape_text(game.get_options_code()) + '</span>';
         html += '<br />';
         html += '<span class="open_game_button button">' + (editable ? 'Publish game' : 'Join game') + '</span>';
     html += '</div>';
@@ -82,17 +74,26 @@ var CreateGameRenderer = function(remote, game)
         Util.toggle_class(el, 'expanded');
     };
 
+    els.board.onkeyup = function()
+    {
+        game.update_board(els.board.innerText);
+    };
+    els.formation.onkeyup = function()
+    {
+        game.update_formation(els.formation.innerText);
+    };
+    els.options.onkeyup = function()
+    {
+        game.update_options(els.options.innerText);
+    };
+
     els.button.onclick = function()
     {
         if (editable)
         {
             remote.write({
                 'q': 'create_game',
-                'game': {
-                    'board': els.board.innerText,
-                    'formation': els.formation.innerText,
-                    'options': els.options.innerText,
-                },
+                'game': game.serialize(),
             });
             editable = false;
         }
@@ -119,4 +120,4 @@ var CreateGameRenderer = function(remote, game)
                     <button id="create_game_button">Create game</button>
                 </fieldset>
                 */
-            };
+};

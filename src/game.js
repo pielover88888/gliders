@@ -1,11 +1,30 @@
-var Game = function(opts, player_id)
+var Config = require('./config.js');
+var HexGrid = require('./hexgrid.js');
+var Util = require('./util.js');
+
+module.exports = function(game_id)
 {
     var _this = this;
 
-    var players = [];
+    var board_code;
+    var formation_code;
+    var options_code;
+
+    var opts = JSON.parse(JSON.stringify(Config.default_opts));
+
+    var player_names = [];
 
     var board;
     var pieces = [];
+
+    var num_players;
+    var players_dead;
+    var player_spawns;
+
+    var turn = 0;
+    var current_player = 0;
+    var can_shoot = true;
+    var turn_actions = [];
 
     var board_rad;
     var board_diam;
@@ -19,13 +38,6 @@ var Game = function(opts, player_id)
     this.ACTION_SHOOT = 2;
     this.ACTION_SPAWN = 3;
 
-    var num_players;
-    var turn = 0;
-    var players_dead = new Array(opts.num_players);
-    var player_spawns = new Array(opts.num_players).fill(opts.num_spawns);
-    var can_shoot = true;
-    var turn_actions = [];
-
     this.reset_cells_callback = function() {};
     this.add_cell_callback = function() {};
     this.finalize_cells_callback = function() {};
@@ -37,8 +49,16 @@ var Game = function(opts, player_id)
     this.eliminate_player_callback = function() {};
     this.end_turn_callback = function() {};
 
+    this.get_game_id = function() {return game_id;};
+    this.get_player_names = function() {return player_names;};
+    this.get_board_code = function() {return board_code;};
+    this.get_formation_code = function() {return formation_code;};
+    this.get_options_code = function() {return options_code;};
+
     this.update_board = function(code)
     {
+        board_code = code;
+
         var type_map = {
             'n': _this.CELL_EMPTY,
             'v': _this.CELL_EDGE,
@@ -48,12 +68,14 @@ var Game = function(opts, player_id)
         {
             board_rad = radius;
             board_diam = radius * 2 + 1;
-            board = new Array(board_diam * board_diam).fill(_this.CELL_EDGE);
+            board = Util.fill_array(board_diam * board_diam, _this.CELL_EDGE);
 
             neighbor_offsets = [-board_diam + 1, 1, board_diam, board_diam - 1, -1, -board_diam];
             neighbor_offsets = neighbor_offsets.concat(neighbor_offsets);
 
             num_players = 6 / sectors;
+            players_dead = Util.fill_array(num_players, undefined);
+            player_spawns = Util.fill_array(num_players, opts.spawns);
         };
         var add_cell = function(x, y, type)
         {
@@ -74,47 +96,105 @@ var Game = function(opts, player_id)
         _this.reset_cells_callback();
         HexGrid.str_to_grid(code, meta_callback, add_cell, _this.code_warning_callback);
         _this.finalize_cells_callback();
+
+        pieces = [];
     };
 
     this.update_formation = function(code)
     {
+        formation_code = code;
+
+        for (var i = 0; i < pieces.length; i++)
+        {
+            board[pieces[i].loc] = _this.CELL_EMPTY;
+            _this.remove_piece_callback(pieces[i]);
+        }
+        pieces = [];
+
         var add_piece = function(x, y, type, sector)
         {
             if (type === 'n' || type === 'k')
             {
                 var loc = _this.get_loc(x, y);
+
+                if (board[loc] === _this.CELL_EDGE)
+                {
+                    _this.code_warning_callback('Make piece location is an edge cell');
+                    return;
+                }
+                if (board[loc] !== _this.CELL_EMPTY)
+                {
+                    _this.code_warning_callback('Make piece location is already occupied');
+                    return;
+                }
+
                 var piece = make_piece(sector, loc, type === 'k');
                 _this.add_piece_callback(piece);
             }
             else if (type !== 'e' && type)
             {
-                _this.code_warning_callback('Invalid type code "' + type_code + '"');
+                _this.code_warning_callback('Invalid type code "' + type + '"');
             }
         };
         HexGrid.str_to_grid(code, function() {}, add_piece, _this.code_warning_callback);
     };
 
-    this.add_player = function(player)
+    this.update_options = function(code)
     {
-        if (players.length >= opts.num_players)
+        options_code = code;
+
+        opts = JSON.parse(JSON.stringify(Config.default_opts));
+
+        var assignments = code.split(',');
+        for (var i = 0; i < assignments.length; i++)
         {
-            console.error('Cannot add another player to game, already at max of ' + opts.num_players + ' players');
-            return;
+            var parts = assignments[i].split('=');
+            opts[parts[0].trim()] = parts[1].trim();
         }
-        players.push(player);
+
+        player_spawns = Util.fill_array(num_players, opts.spawns);
     };
 
-    this.remove_player = function(player)
+    this.add_player = function(name)
     {
-        var i = players.indexOf(player);
+        if (player_names.length >= num_players)
+        {
+            console.error('Cannot add another player to game, already at max of ' + num_players + ' players');
+            return;
+        }
+        player_names.push(name);
+    };
+
+    this.remove_player = function(name)
+    {
+        var i = player_names.indexOf(name);
         if (i === -1)
         {
             return false;
         }
         else
         {
-            players.splice(i, 1);
+            player_names.splice(i, 1);
         }
+    };
+
+    this.serialize = function()
+    {
+        return {
+            'game_id': game_id,
+            'board': board_code,
+            'formation': formation_code,
+            'options': options_code,
+            'player_names': player_names,
+        };
+    };
+    this.deserialize = function(obj)
+    {
+        if (obj.game_id && typeof game_id === 'undefined') {game_id = obj.game_id;}
+        if (obj.board) {_this.update_board(obj.board);}
+        if (obj.formation) {_this.update_formation(obj.formation);}
+        if (obj.options) {_this.update_options(obj.options);}
+        if (obj.player_names) {player_names = obj.player_names;}
     };
 
     this.get_piece = function(piece_id)
@@ -129,8 +209,7 @@ var Game = function(opts, player_id)
 
     this.get_piece_actions = function(piece)
     {
-        if (piece.player_id !== player_id) {return [];}
-        if (piece.player_id !== turn % opts.num_players) {return [];}
+        if (piece.player_id !== current_player) {return [];}
 
         var actions = [];
 
@@ -178,7 +257,7 @@ var Game = function(opts, player_id)
             return false;
         }
 
-        if (piece.player_id !== turn % opts.num_players) {return false;}
+        if (piece.player_id !== current_player) {return false;}
 
         var front_loc = piece.loc + neighbor_offsets[action.dir];
 
@@ -210,8 +289,8 @@ var Game = function(opts, player_id)
         if (turn_actions.length) {return false;}
 
         if (board[front_loc] === _this.CELL_EMPTY) {return true;}
-        if (piece.is_king && typeof board[front_loc] === 'object' && board[front_loc].player_id !== player_id) {return true;}
-        if (typeof board[front_loc] === 'object' && board[front_loc].is_king && board[front_loc].player_id !== player_id) {return true;}
+        if (piece.is_king && typeof board[front_loc] === 'object' && board[front_loc].player_id !== current_player) {return true;}
+        if (typeof board[front_loc] === 'object' && board[front_loc].is_king && board[front_loc].player_id !== current_player) {return true;}
 
         return false;
     };
@@ -222,10 +301,10 @@ var Game = function(opts, player_id)
         if (board[front_loc] !== _this.CELL_EMPTY) {return false;}
 
         var back_right = board[piece.loc + neighbor_offsets[dir + 2]];
-        if (typeof back_right !== 'object' || back_right.player_id !== player_id) {return false;}
+        if (typeof back_right !== 'object' || back_right.player_id !== current_player) {return false;}
 
         var back_left = board[piece.loc + neighbor_offsets[dir + 4]];
-        if (typeof back_left !== 'object' || back_left.player_id !== player_id) {return false;}
+        if (typeof back_left !== 'object' || back_left.player_id !== current_player) {return false;}
 
         var back_center = board[piece.loc + neighbor_offsets[dir + 3]];
         if (back_center !== _this.CELL_EMPTY) {return false;}
@@ -236,7 +315,7 @@ var Game = function(opts, player_id)
     {
         if (!piece.is_king) {return false;}
         if (turn_actions.length) {return false;}
-        if (!player_spawns[turn % opts.num_players]) {return false;}
+        if (!player_spawns[current_player]) {return false;}
 
         if (board[front_loc] === _this.CELL_EMPTY) {return true;}
 
@@ -258,7 +337,7 @@ var Game = function(opts, player_id)
                 loc += dir_offset;
             } while (board[loc] === this.CELL_EMPTY);
 
-            if (typeof board[loc] !== 'object' || board[loc].player_id === player_id)
+            if (typeof board[loc] !== 'object' || board[loc].player_id === current_player)
             {
                 // Hit the edge or our own piece
                 loc -= dir_offset;
@@ -313,7 +392,6 @@ var Game = function(opts, player_id)
             console.error('Make piece location is an edge cell');
             return;
         }
-
         if (board[loc] !== _this.CELL_EMPTY)
         {
             console.error('Make piece location is already occupied');
@@ -347,8 +425,19 @@ var Game = function(opts, player_id)
 
         if (piece.is_king)
         {
-            _this.eliminate_player_callback();
+            if (is_player_eliminated(piece.player_id))
+            {
+                _this.eliminate_player_callback();
+            }
         }
+    };
+    var is_player_eliminated = function(player_id)
+    {
+        for (var i = 0; i < pieces.length; i++)
+        {
+            if (pieces[i].player_id === player_id && pieces[i].is_king) {return false;}
+        }
+        return true;
     };
 
     this.end_turn = function()
@@ -358,7 +447,9 @@ var Game = function(opts, player_id)
         do
         {
             turn++;
-        } while (players_dead[turn % opts.num_players]);
+            current_player = turn % num_players;
+        } while (players_dead[current_player]);
+
         can_shoot = true;
 
         var actions = turn_actions;
@@ -380,8 +471,6 @@ var Game = function(opts, player_id)
         return (row + board_rad) * board_diam + col + board_rad;
     };
 
-    this.get_options = function() {return opts;};
-    this.get_player_id = function() {return player_id;};
     this.get_board = function() {return board;};
     this.get_pieces = function() {return pieces;};
 };

@@ -1,4 +1,4 @@
-var Player = module.exports = function(spark)
+module.exports = function(spark)
 {
     var _this = this;
 

@@ -1,8 +1,9 @@
-var GameController = function(game, remote)
+var Util = require('./util.js');
+
+module.exports = function(game, remote)
 {
     var _this = this;
 
-    var player_id = game.get_player_id();
 
     var init = function()
     {
@@ -31,7 +32,7 @@ var GameController = function(game, remote)
         }
         check(game.end_turn());
     });
-    
+
     Util.add_callback(game, 'end_turn_callback', function(actions)
     {
         remote.write({

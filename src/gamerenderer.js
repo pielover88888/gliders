@@ -1,9 +1,12 @@
-var GameRenderer = function(controller, els)
+var Config = require('./config.js');
+var HexGridView = require('./hexgridview.js');
+var Util = require('./util.js');
+
+module.exports = function(controller, els, player_id)
 {
     var _this = this;
 
     var game = controller.get_game();
-    var opts = game.get_options();
 
     var grid = new HexGridView(els.board, game);
 
@@ -18,11 +21,11 @@ var GameRenderer = function(controller, els)
     var sqrt_3 = Math.sqrt(3.0);
     var get_cell_cx = function(row, col)
     {
-        return col * opts.cell_spacing * sqrt_3 + row * opts.cell_spacing * sqrt_3 / 2.0;
+        return col * Config.cell_spacing * sqrt_3 + row * Config.cell_spacing * sqrt_3 / 2.0;
     };
     var get_cell_cy = function(row, col)
     {
-        return row * opts.cell_spacing * 3.0/2.0;
+        return row * Config.cell_spacing * 3.0/2.0;
     };
     */
 
@@ -45,10 +48,10 @@ var GameRenderer = function(controller, els)
         }
         */
         /*
-        for (var i = 0; i < opts.board_rad; i++)
+        for (var i = 0; i < Config.board_rad; i++)
         {
-            var cols = opts.board_rad * 2 - 1 - i;
-            for (var j = 1 - opts.board_rad; j < opts.board_rad - i; j++)
+            var cols = Config.board_rad * 2 - 1 - i;
+            for (var j = 1 - Config.board_rad; j < Config.board_rad - i; j++)
             {
                 make_cell(i, j);
                 if (i)
@@ -68,7 +71,7 @@ var GameRenderer = function(controller, els)
         el.setAttribute('points', get_hex_pts().join(' '));
         el.style.fill = 'silver';
         el.style.stroke = 'grey';
-        el.style.strokeWidth = opts.stroke_width;
+        el.style.strokeWidth = Config.stroke_width;
         el.onclick = function()
         {
             console.log(loc);
@@ -87,8 +90,8 @@ var GameRenderer = function(controller, els)
         for (var i = 0; i < 6; i++)
         {
             var ang = i * Math.PI / 3.0;
-            var x = Math.sin(ang) * opts.cell_rad;
-            var y = Math.cos(ang) * opts.cell_rad;
+            var x = Math.sin(ang) * Config.cell_rad;
+            var y = Math.cos(ang) * Config.cell_rad;
             pts.push(Math.round(x) + ',' + Math.round(y));
         }
         return pts;
@@ -113,10 +116,10 @@ var GameRenderer = function(controller, els)
     {
         var el = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
         grid.set_transform(el, piece.loc);
-        el.setAttribute('r', opts.piece_rad);
-        el.style.fill = piece.is_king ? opts.piece_king_colors[piece.player_id] : opts.piece_colors[piece.player_id];
+        el.setAttribute('r', Config.piece_rad);
+        el.style.fill = piece.is_king ? Config.piece_king_colors[piece.player_id] : Config.piece_colors[piece.player_id];
         el.style.stroke = 'silver';
-        el.style.strokeWidth = opts.stroke_width;
+        el.style.strokeWidth = Config.stroke_width;
 
         el.onclick = function()
         {
@@ -151,16 +154,18 @@ var GameRenderer = function(controller, els)
 
     var show_piece_actions = function(piece)
     {
+        if (piece.player_id !== player_id) {return;}
+        
         var actions = game.get_piece_actions(piece);
 
         for (var i = 0; i < actions.length; i++)
         {
             var el = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
             grid.set_transform(el, game.get_action_location(piece, actions[i]));
-            el.setAttribute('r', opts.action_rad);
-            el.style.fill = opts.piece_actions_colors[piece.player_id];
+            el.setAttribute('r', Config.action_rad);
+            el.style.fill = Config.piece_actions_colors[piece.player_id];
             el.style.stroke = 'silver';
-            el.style.strokeWidth = opts.stroke_width;
+            el.style.strokeWidth = Config.stroke_width;
 
             el.onclick = game.do_action.bind(null, piece, actions[i]);
 

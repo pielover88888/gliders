@@ -1,8 +1,9 @@
-var HexGridView = function(container, game)
+var Config = require('./config.js');
+var Util = require('./util.js');
+
+module.exports = function(container, game)
 {
     var _this = this;
-
-    var opts = game.get_options();
 
     var hex_pool = [];
     var hex_pool_next = 0;
@@ -38,7 +39,7 @@ var HexGridView = function(container, game)
         el.setAttribute('points', get_hex_pts().join(' '));
         el.style.fill = 'silver';
         el.style.stroke = 'grey';
-        el.style.strokeWidth = opts.stroke_width;
+        el.style.strokeWidth = Config.stroke_width;
         el.onclick = function()
         {
         };
@@ -59,8 +60,8 @@ var HexGridView = function(container, game)
         for (var i = 0; i < 6; i++)
         {
             var ang = i * Math.PI / 3.0;
-            var x = Math.sin(ang) * opts.cell_rad;
-            var y = Math.cos(ang) * opts.cell_rad;
+            var x = Math.sin(ang) * Config.cell_rad;
+            var y = Math.cos(ang) * Config.cell_rad;
             pts.push(Math.round(x) + ',' + Math.round(y));
         }
         return pts;
@@ -75,8 +76,8 @@ var HexGridView = function(container, game)
     {
         var row = game.get_row(loc);
         var col = game.get_col(loc);
-        var x = Math.floor(col * opts.cell_spacing * sqrt_3 + row * opts.cell_spacing * sqrt_3 / 2.0);
-        var y = Math.floor(row * opts.cell_spacing * 3.0/2.0);
+        var x = Math.floor(col * Config.cell_spacing * sqrt_3 + row * Config.cell_spacing * sqrt_3 / 2.0);
+        var y = Math.floor(row * Config.cell_spacing * 3.0/2.0);
         el.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
     };
 };
