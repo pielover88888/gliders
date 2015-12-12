@@ -1,3 +1,4 @@
+var Config = require('./config.js');
 var Util = require('./util.js');
 
 module.exports = function(remote, game, editable)
@@ -12,7 +13,7 @@ module.exports = function(remote, game, editable)
             var players = game.get_player_names();
             for (var i = 0; i < players.length; i++)
             {
-                html += '<span class="open_game_player">' + Util.escape_text(players[i]) + '</span>';
+                html += '<span class="open_game_player" style="color: ' + Config.piece_colors[i] + ';">' + Util.escape_text(players[i]) + '</span>';
             }
             /*
             html += '<span class="open_game_players_have"></span>';

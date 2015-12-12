@@ -33,7 +33,7 @@ var ServerApp = function()
         {
             remote.write({
                 'q': 'open_games_push',
-                'game': open_games[i],
+                'game': open_games[i].serialize(),
             });
         }
     };

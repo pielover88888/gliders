@@ -75,6 +75,11 @@ html, body {
     text-align: center;
 }
 
+#games_list .open_game {
+    background-color: #EEE;
+    padding: 10px;
+}
+
 #games_list .open_game .open_game_details {
     display: none;
 }
