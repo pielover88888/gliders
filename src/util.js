@@ -61,6 +61,11 @@ var Util = module.exports = {
             el.setAttribute('class', old_classes.join(' ').trim());
         }
     },
+    'toggle_visibility': function(selector)
+    {
+        var el = document.querySelector(selector);
+        el.style.display = el.style.display === 'none' ? 'initial' : 'none';
+    },
     'toggle_class': function(el, c)
     {
         var old_classes = Util.get_classes(el);
